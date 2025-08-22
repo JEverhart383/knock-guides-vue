@@ -72,13 +72,6 @@ const knockGuideClient = ref(null);
  * Use Knock Guides via the packaged SDK
  */
 export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
-  console.log("🔍 useKnockGuides called with:", {
-    knockGuideClient: !!knockGuideClient.value,
-    knockClientValue: !!knockClient.value,
-    isAuthenticated: isAuthenticated.value,
-    channelId,
-  });
-
   // Single computed property that automatically updates
   const isGuideClientInitialized = computed(
     () =>
@@ -103,34 +96,13 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
 
       // Subscribe to store changes - Vue automatically handles reactivity
       knockGuideClient.value.store.subscribe(() => {
-        console.log(
-          "🔄 TanStack store updated, Vue reactivity handled automatically"
-        );
+        // Vue automatically handles reactivity
       });
     } catch (error) {
       console.error("❌ Failed to initialize packaged guides client:", error);
-      console.log("📡 Falling back to API method");
       knockGuideClient.value = null;
     }
-  } else {
-    console.log("🔍 Skipping initialization because:", {
-      knockGuideClientExists: !!knockGuideClient.value,
-      knockClientExists: !!knockClient.value,
-      isAuthenticated: isAuthenticated.value,
-    });
   }
-
-  // Debug logging
-  console.log("🔍 Debug info:", {
-    knockGuideClient: !!knockGuideClient.value,
-    hasStore: !!(knockGuideClient.value && knockGuideClient.value.store),
-    hasSelectGuides: !!(
-      knockGuideClient.value && knockGuideClient.value.selectGuides
-    ),
-    isGuideClientInitialized: isGuideClientInitialized.value,
-    knockClientValue: !!knockClient.value,
-    isAuthenticated: isAuthenticated.value,
-  });
 
   // Reactive state from the SDK's TanStack store
   const guides = computed(() => {
@@ -170,10 +142,6 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
   const fetchGuides = async (filters = {}) => {
     // Check if we can initialize the guide client now (in case authentication happened after useKnockGuides was called)
     if (!knockGuideClient.value && knockClient.value && isAuthenticated.value) {
-      console.log(
-        "🏗️ Late initialization of KnockGuideClient during fetchGuides"
-      );
-
       try {
         knockGuideClient.value = new KnockGuideClient(
           knockClient.value,
@@ -185,9 +153,7 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
 
         // Subscribe to store changes - Vue automatically handles reactivity
         knockGuideClient.value.store.subscribe(() => {
-          console.log(
-            "🔄 TanStack store updated, Vue reactivity handled automatically"
-          );
+          // Vue automatically handles reactivity
         });
       } catch (error) {
         console.error(
@@ -200,7 +166,6 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
 
     // Now check if we have the guide client
     if (isGuideClientInitialized.value) {
-      console.log("📡 Fetching guides using packaged KnockGuideClient");
       try {
         await knockGuideClient.value.fetch({ filters });
         console.log("✅ Guides fetched successfully using packaged client");
