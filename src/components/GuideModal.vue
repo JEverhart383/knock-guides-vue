@@ -1,18 +1,18 @@
 <template>
   <Teleport to="body" :disabled="!isMounted">
     <div
-      v-if="step && isMounted"
+      v-if="shouldShowModal"
       class="knock-guide-modal-overlay"
       @click="handleOverlayClick"
-      :data-guide-id="step.id"
-      :id="`guide-modal-${step.id}`"
+      :data-guide-id="step?.id"
+      :id="`guide-modal-${step?.id || 'no-guide'}`"
     >
       <div
         class="knock-guide-modal"
         @click.stop
         role="dialog"
         aria-modal="true"
-        :aria-labelledby="step.content.title ? 'modal-title' : undefined"
+        :aria-labelledby="step?.content?.title ? 'modal-title' : undefined"
       >
         <button
           class="knock-guide-modal__close"
@@ -23,14 +23,14 @@
         </button>
 
         <div
-          v-if="step.content.title"
+          v-if="step?.content?.title"
           class="knock-guide-modal__title"
           id="modal-title"
         >
           {{ step.content.title }}
         </div>
 
-        <div v-if="step.content.body" class="knock-guide-modal__body">
+        <div v-if="step?.content?.body" class="knock-guide-modal__body">
           <div v-html="step.content.body"></div>
         </div>
 
@@ -54,11 +54,16 @@
 import { computed, onMounted, onUnmounted, watch, ref } from "vue";
 import { useGuide } from "../composables/useGuide.js";
 
-// Use the guide composable without specific configuration
-const { step } = useGuide({ type: "modal" });
+// Use the guide composable to get guide data and determine visibility
+const { step, guides } = useGuide({ type: "modal" });
 
 // Track mount state for Teleport
 const isMounted = ref(false);
+
+// Self-contained visibility logic - only show when we have a valid guide step
+const shouldShowModal = computed(() => {
+  return step.value && isMounted.value;
+});
 
 // Debug the step
 watch(
@@ -70,6 +75,7 @@ watch(
       stepContent: newStep?.content,
       stepTitle: newStep?.content?.title,
       stepBody: newStep?.content?.body,
+      shouldShow: shouldShowModal.value,
     });
   },
   { immediate: true }

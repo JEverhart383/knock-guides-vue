@@ -1,10 +1,7 @@
 <template>
   <div>
-    <!-- Guide Modal - Only render if we have guides -->
-    <GuideModal
-      v-if="guides && guides.length > 0"
-      :key="`guide-modal-${guides.length}-${loading}`"
-    />
+    <!-- Guide Modal - Always rendered, self-contained -->
+    <GuideModal />
 
     <!-- Main content slot -->
     <slot />
