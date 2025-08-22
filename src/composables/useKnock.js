@@ -1,14 +1,6 @@
 import { ref, computed } from "vue";
 import Knock, { KnockGuideClient } from "@knocklabs/client";
 
-// Helper function to convert array to object keyed by 'key' property
-const byKey = (items) => {
-  return items.reduce((acc, item) => {
-    acc[item.key] = item;
-    return acc;
-  }, {});
-};
-
 console.log("✅ Using packaged KnockGuideClient from @knocklabs/client");
 
 // Global state for the Knock client

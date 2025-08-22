@@ -1,4 +1,4 @@
-import { computed, inject } from "vue";
+import { computed } from "vue";
 import { useKnockGuides } from "./useKnock.js";
 
 /**
@@ -7,16 +7,9 @@ import { useKnockGuides } from "./useKnock.js";
 export function useGuide(options = {}) {
   let { type, key } = options;
 
-  // Try to get guide config from provider if not passed as options
-  const injectedGuideConfig = inject("guideConfig", null);
-  if (injectedGuideConfig && !type && !key) {
-    type = injectedGuideConfig.type;
-    key = injectedGuideConfig.key;
-  }
-
   const { guideClient, guides } = useKnockGuides();
 
-  // Use the SDK's built-in selector or fallback to manual selection
+  // Use the SDK's built-in selector
   const step = computed(() => {
     // Try advanced SDK selector first
     if (

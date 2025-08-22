@@ -1,35 +1,39 @@
 <template>
   <Teleport to="body" :disabled="!isMounted">
-    <div 
-      v-if="step && isMounted" 
+    <div
+      v-if="step && isMounted"
       class="knock-guide-modal-overlay"
       @click="handleOverlayClick"
       :data-guide-id="step.id"
       :id="`guide-modal-${step.id}`"
     >
-      <div 
+      <div
         class="knock-guide-modal"
         @click.stop
         role="dialog"
         aria-modal="true"
         :aria-labelledby="step.content.title ? 'modal-title' : undefined"
       >
-        <button 
+        <button
           class="knock-guide-modal__close"
           @click="handleClose"
           aria-label="Close modal"
         >
           ×
         </button>
-        
-        <div v-if="step.content.title" class="knock-guide-modal__title" id="modal-title">
+
+        <div
+          v-if="step.content.title"
+          class="knock-guide-modal__title"
+          id="modal-title"
+        >
           {{ step.content.title }}
         </div>
-        
+
         <div v-if="step.content.body" class="knock-guide-modal__body">
           <div v-html="step.content.body"></div>
         </div>
-        
+
         <div v-if="hasActions" class="knock-guide-modal__actions">
           <button
             v-for="(action, index) in step.content.actions"
@@ -47,182 +51,191 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, watch, ref } from 'vue'
-import { useGuide } from '../composables/useGuide.js'
+import { computed, onMounted, onUnmounted, watch, ref } from "vue";
+import { useGuide } from "../composables/useGuide.js";
 
-// Props
-const props = defineProps({
-  type: {
-    type: String,
-    default: 'modal'
-  },
-  guideKey: {
-    type: String,
-    default: null
-  }
-})
-
-// Use the guide composable
-const { step } = useGuide({ 
-  type: props.type, 
-  key: props.guideKey 
-})
+// Use the guide composable without specific configuration
+const { step } = useGuide({ type: "modal" });
 
 // Track mount state for Teleport
-const isMounted = ref(false)
+const isMounted = ref(false);
 
 // Debug the step
-watch(step, (newStep) => {
-  console.log('🎭 GuideModal step changed:', {
-    hasStep: !!newStep,
-    stepId: newStep?.id,
-    stepContent: newStep?.content,
-    stepTitle: newStep?.content?.title,
-    stepBody: newStep?.content?.body
-  })
-}, { immediate: true })
+watch(
+  step,
+  (newStep) => {
+    console.log("🎭 GuideModal step changed:", {
+      hasStep: !!newStep,
+      stepId: newStep?.id,
+      stepContent: newStep?.content,
+      stepTitle: newStep?.content?.title,
+      stepBody: newStep?.content?.body,
+    });
+  },
+  { immediate: true }
+);
 
 // Computed properties
 const hasActions = computed(() => {
-  return step.value?.content?.actions && step.value.content.actions.length > 0
-})
+  return step.value?.content?.actions && step.value.content.actions.length > 0;
+});
 
 // Methods
 const handleOverlayClick = () => {
-  handleClose()
-}
+  handleClose();
+};
 
 const handleClose = async () => {
   if (step.value) {
-    console.log('🚪 Closing guide modal')
-    
+    console.log("🚪 Closing guide modal");
+
     // Prevent multiple rapid clicks
     if (handleClose._isProcessing) {
-      return
+      return;
     }
-    handleClose._isProcessing = true
-    
+    handleClose._isProcessing = true;
+
     try {
       // Try SDK's built-in method first, fallback to manual tracking
-      console.log('🔍 Attempting to archive step:', step.value)
-      console.log('🔍 step.value.markAsArchived exists:', !!(step.value && step.value.markAsArchived))
-      
+      console.log("🔍 Attempting to archive step:", step.value);
+      console.log(
+        "🔍 step.value.markAsArchived exists:",
+        !!(step.value && step.value.markAsArchived)
+      );
+
       if (step.value && step.value.markAsArchived) {
-        console.log('🗃️ Calling step.value.markAsArchived()')
-        await step.value.markAsArchived()
-        console.log('✅ Successfully archived step')
+        console.log("🗃️ Calling step.value.markAsArchived()");
+        await step.value.markAsArchived();
+        console.log("✅ Successfully archived step");
       } else {
-        console.log('🗃️ Using fallback archive tracking (older SDK)')
+        console.log("🗃️ Using fallback archive tracking (older SDK)");
         // Fallback - just log for now since we don't have the manual methods in this simplified version
       }
     } catch (err) {
-      console.error('❌ Error archiving guide:', err)
-      console.error('❌ Error details:', err.message, err.stack)
+      console.error("❌ Error archiving guide:", err);
+      console.error("❌ Error details:", err.message, err.stack);
     } finally {
       // Reset the processing flag after a short delay
       setTimeout(() => {
-        handleClose._isProcessing = false
-      }, 500)
+        handleClose._isProcessing = false;
+      }, 500);
     }
   }
-}
+};
 
 const handleActionClick = (action) => {
   if (step.value) {
     // Try SDK's built-in method first, fallback to manual tracking
     if (step.value.markAsInteracted) {
-      step.value.markAsInteracted({ metadata: { action: action.label || action.text } })
+      step.value.markAsInteracted({
+        metadata: { action: action.label || action.text },
+      });
     } else {
-      console.log('🤝 Using fallback interaction tracking (older SDK)')
+      console.log("🤝 Using fallback interaction tracking (older SDK)");
       // Fallback - just log for now since we don't have the manual methods in this simplified version
     }
   }
-  
+
   // Handle the action (e.g., navigate to URL, call callback)
   if (action.url) {
-    window.open(action.url, '_blank')
+    window.open(action.url, "_blank");
   } else if (action.action) {
     // If action has a custom handler
-    if (typeof action.action === 'function') {
-      action.action()
-    } else if (typeof action.action === 'string' && action.action.startsWith('http')) {
-      window.open(action.action, '_blank')
+    if (typeof action.action === "function") {
+      action.action();
+    } else if (
+      typeof action.action === "string" &&
+      action.action.startsWith("http")
+    ) {
+      window.open(action.action, "_blank");
     }
   }
-  
+
   // Close modal after interaction
-  handleClose()
-}
+  handleClose();
+};
 
 const getButtonClass = (action, index) => {
-  const baseClass = 'knock-guide-modal__button'
-  
+  const baseClass = "knock-guide-modal__button";
+
   // First button is typically primary
   if (index === 0) {
-    return `${baseClass} ${baseClass}--primary`
+    return `${baseClass} ${baseClass}--primary`;
   }
-  
-  return `${baseClass} ${baseClass}--secondary`
-}
+
+  return `${baseClass} ${baseClass}--secondary`;
+};
 
 // Handle escape key
 const handleEscape = (event) => {
-  if (event.key === 'Escape' && step.value) {
-    handleClose()
+  if (event.key === "Escape" && step.value) {
+    handleClose();
   }
-}
+};
 
 // Mark as seen when modal appears
 onMounted(() => {
   // Enable Teleport after mount
-  isMounted.value = true
-  
+  isMounted.value = true;
+
   // Clean up any existing duplicate modals first
-  const existingModals = document.querySelectorAll('.knock-guide-modal-overlay')
+  const existingModals = document.querySelectorAll(
+    ".knock-guide-modal-overlay"
+  );
   if (existingModals.length > 1) {
     existingModals.forEach((modal, index) => {
-      if (index > 0) { // Keep only the first one
-        modal.remove()
+      if (index > 0) {
+        // Keep only the first one
+        modal.remove();
       }
-    })
+    });
   }
-  
+
   if (step.value) {
     // Try SDK's built-in method first, fallback to manual tracking
     if (step.value.markAsSeen) {
-      step.value.markAsSeen()
+      step.value.markAsSeen();
     } else {
-      console.log('📍 Using fallback seen tracking (older SDK)')
+      console.log("📍 Using fallback seen tracking (older SDK)");
       // Fallback - just log for now since we don't have the manual methods in this simplified version
     }
   }
-  
+
   // Add escape key listener
-  document.addEventListener('keydown', handleEscape)
-})
+  document.addEventListener("keydown", handleEscape);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscape)
-  
+  document.removeEventListener("keydown", handleEscape);
+
   // Clean up any duplicate modals that might exist
-  const existingModals = document.querySelectorAll('.knock-guide-modal-overlay')
+  const existingModals = document.querySelectorAll(
+    ".knock-guide-modal-overlay"
+  );
   existingModals.forEach((modal, index) => {
-    if (index > 0) { // Keep only the first one, remove duplicates
-      modal.remove()
+    if (index > 0) {
+      // Keep only the first one, remove duplicates
+      modal.remove();
     }
-  })
-})
+  });
+});
 
 // Watch for step changes and mark as seen
-watch(step, (newStep, oldStep) => {
-  if (newStep && newStep.id !== oldStep?.id) {
-    if (newStep.markAsSeen) {
-      newStep.markAsSeen()
-    } else {
-      console.log('📍 Using fallback seen tracking on step change (older SDK)')
+watch(
+  step,
+  (newStep, oldStep) => {
+    if (newStep && newStep.id !== oldStep?.id) {
+      if (newStep.markAsSeen) {
+        newStep.markAsSeen();
+      } else {
+        console.log(
+          "📍 Using fallback seen tracking on step change (older SDK)"
+        );
+      }
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
