@@ -18,7 +18,7 @@
       <div class="app">
         <header class="app-header">
           <h1>Vue.js Knock Guide Demo</h1>
-          <p>This demo shows modal guides</p>
+          <p>This demo shows modal guides and banner guides</p>
         </header>
 
         <main class="app-main">
@@ -26,9 +26,9 @@
             <h2>Welcome to the Demo</h2>
             <p>
               This application demonstrates how to integrate Knock guides into a
-              Vue.js application. The modal should appear automatically when you
-              load the page if you have a guide configured in your Knock
-              dashboard.
+              Vue.js application. The modal and banner should appear
+              automatically when you load the page if you have guides configured
+              in your Knock dashboard.
             </p>
 
             <div class="demo-info">
@@ -36,8 +36,11 @@
               <ul>
                 <li>The app initializes the Knock client with your API key</li>
                 <li>It authenticates a demo user</li>
-                <li>It fetches guides with type "modal"</li>
-                <li>When a guide is found, the modal automatically appears</li>
+                <li>It fetches guides with type "modal" and "banner"</li>
+                <li>
+                  When a guide is found, the modal or banner automatically
+                  appears
+                </li>
                 <li>
                   User interactions (seen, interacted, archived) are tracked
                   automatically
@@ -50,27 +53,26 @@
               <p><strong>API Key:</strong> {{ knockConfig.apiKey }}</p>
               <p><strong>User ID:</strong> {{ knockConfig.userId }}</p>
               <p><strong>Channel ID:</strong> {{ knockConfig.channelId }}</p>
-              <p><strong>Guide Type:</strong> modal</p>
+              <p><strong>Guide Types:</strong> modal, banner</p>
             </div>
 
             <div class="setup-instructions">
               <h3>Setup Instructions:</h3>
               <ol>
                 <li>
-                  Replace the API key in
-                  <code>src/composables/useKnock.js</code> with your actual
-                  Knock public API key
+                  Replace the API key in your environment variables with your
+                  actual Knock public API key
                 </li>
                 <li>
-                  Replace the channel ID in
-                  <code>src/composables/useKnock.js</code> with your actual
-                  guide channel ID
+                  Replace the channel ID in your environment variables with your
+                  actual guide channel ID
                 </li>
                 <li>
-                  Create a guide in your Knock dashboard with type "modal"
+                  Create guides in your Knock dashboard with types "modal" and
+                  "banner"
                 </li>
                 <li>
-                  Make sure your guide is active and targets the demo user
+                  Make sure your guides are active and target the demo user
                 </li>
               </ol>
             </div>
@@ -94,11 +96,6 @@ const knockConfig = reactive({
   userToken: null, // Not required for development
   channelId:
     import.meta.env.VITE_KNOCK_GUIDE_CHANNEL_ID || "YOUR_GUIDE_CHANNEL_ID", // Replace with your actual guide channel ID
-});
-
-// Guide configuration - always modal type
-const guideConfig = reactive({
-  type: "modal",
 });
 
 // Guide status tracking

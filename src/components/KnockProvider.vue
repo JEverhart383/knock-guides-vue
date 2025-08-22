@@ -1,5 +1,8 @@
 <template>
   <div>
+    <!-- Guide Banner - Always rendered, self-contained -->
+    <GuideBanner :channel-id="channelId" />
+
     <!-- Guide Modal - Always rendered, self-contained -->
     <GuideModal :channel-id="channelId" />
 
@@ -12,6 +15,7 @@
 import { onMounted, onUnmounted, watch } from "vue";
 import { useKnock, useKnockGuides } from "../composables/useKnock.js";
 import GuideModal from "./GuideModal.vue";
+import GuideBanner from "./GuideBanner.vue";
 
 // Props
 const props = defineProps({
