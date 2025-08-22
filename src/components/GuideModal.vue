@@ -54,8 +54,19 @@
 import { computed, onMounted, onUnmounted, watch, ref } from "vue";
 import { useGuide } from "../composables/useGuide.js";
 
+// Props
+const props = defineProps({
+  channelId: {
+    type: String,
+    required: true,
+  },
+});
+
 // Use the guide composable to get guide data and determine visibility
-const { step, guides } = useGuide({ type: "modal" });
+const { step, guides } = useGuide({
+  type: "modal",
+  channelId: props.channelId,
+});
 
 // Track mount state for Teleport
 const isMounted = ref(false);

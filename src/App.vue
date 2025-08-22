@@ -7,12 +7,12 @@
       @update:userId="updateUserId"
       @refresh="refreshGuides"
     />
-    
-    <KnockProvider 
+
+    <KnockProvider
       :api-key="knockConfig.apiKey"
       :user-id="knockConfig.userId"
       :user-token="knockConfig.userToken"
-      :guide-config="guideConfig"
+      :channel-id="knockConfig.channelId"
       @guides-updated="handleGuidesUpdated"
     >
       <div class="app">
@@ -20,92 +20,110 @@
           <h1>Vue.js Knock Guide Demo</h1>
           <p>This demo shows modal guides</p>
         </header>
-      
-      <main class="app-main">
-        <div class="content-section">
-          <h2>Welcome to the Demo</h2>
-          <p>
-            This application demonstrates how to integrate Knock guides into a Vue.js application.
-            The modal should appear automatically when you load the page if you have a guide 
-            configured in your Knock dashboard.
-          </p>
-          
-          <div class="demo-info">
-            <h3>How it works:</h3>
-            <ul>
-              <li>The app initializes the Knock client with your API key</li>
-              <li>It authenticates a demo user</li>
-              <li>It fetches guides with type "modal"</li>
-              <li>When a guide is found, the modal automatically appears</li>
-              <li>User interactions (seen, interacted, archived) are tracked automatically</li>
-            </ul>
+
+        <main class="app-main">
+          <div class="content-section">
+            <h2>Welcome to the Demo</h2>
+            <p>
+              This application demonstrates how to integrate Knock guides into a
+              Vue.js application. The modal should appear automatically when you
+              load the page if you have a guide configured in your Knock
+              dashboard.
+            </p>
+
+            <div class="demo-info">
+              <h3>How it works:</h3>
+              <ul>
+                <li>The app initializes the Knock client with your API key</li>
+                <li>It authenticates a demo user</li>
+                <li>It fetches guides with type "modal"</li>
+                <li>When a guide is found, the modal automatically appears</li>
+                <li>
+                  User interactions (seen, interacted, archived) are tracked
+                  automatically
+                </li>
+              </ul>
+            </div>
+
+            <div class="configuration">
+              <h3>Configuration:</h3>
+              <p><strong>API Key:</strong> {{ knockConfig.apiKey }}</p>
+              <p><strong>User ID:</strong> {{ knockConfig.userId }}</p>
+              <p><strong>Channel ID:</strong> {{ knockConfig.channelId }}</p>
+              <p><strong>Guide Type:</strong> modal</p>
+            </div>
+
+            <div class="setup-instructions">
+              <h3>Setup Instructions:</h3>
+              <ol>
+                <li>
+                  Replace the API key in
+                  <code>src/composables/useKnock.js</code> with your actual
+                  Knock public API key
+                </li>
+                <li>
+                  Replace the channel ID in
+                  <code>src/composables/useKnock.js</code> with your actual
+                  guide channel ID
+                </li>
+                <li>
+                  Create a guide in your Knock dashboard with type "modal"
+                </li>
+                <li>
+                  Make sure your guide is active and targets the demo user
+                </li>
+              </ol>
+            </div>
           </div>
-          
-          <div class="configuration">
-            <h3>Configuration:</h3>
-            <p><strong>API Key:</strong> {{ knockConfig.apiKey }}</p>
-            <p><strong>User ID:</strong> {{ knockConfig.userId }}</p>
-            <p><strong>Guide Type:</strong> modal</p>
-          </div>
-          
-          <div class="setup-instructions">
-            <h3>Setup Instructions:</h3>
-            <ol>
-              <li>Replace the API key in <code>src/composables/useKnock.js</code> with your actual Knock public API key</li>
-              <li>Replace the channel ID in <code>src/composables/useKnock.js</code> with your actual guide channel ID</li>
-              <li>Create a guide in your Knock dashboard with type "modal"</li>
-              <li>Make sure your guide is active and targets the demo user</li>
-            </ol>
-          </div>
-        </div>
-      </main>
+        </main>
       </div>
     </KnockProvider>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import KnockProvider from './components/KnockProvider.vue'
-import ConfigBanner from './components/ConfigBanner.vue'
+import { reactive, ref } from "vue";
+import KnockProvider from "./components/KnockProvider.vue";
+import ConfigBanner from "./components/ConfigBanner.vue";
 
 // Demo configuration - uses environment variables with fallbacks
 const knockConfig = reactive({
-  apiKey: import.meta.env.VITE_KNOCK_PUBLIC_API_KEY || 'YOUR_KNOCK_PUBLIC_API_KEY', // Replace with your actual API key
-  userId: import.meta.env.VITE_DEMO_USER_ID || 'YOUR_USER_ID', // Demo user ID
-  userToken: null // Not required for development
-})
+  apiKey:
+    import.meta.env.VITE_KNOCK_PUBLIC_API_KEY || "YOUR_KNOCK_PUBLIC_API_KEY", // Replace with your actual API key
+  userId: import.meta.env.VITE_DEMO_USER_ID || "YOUR_USER_ID", // Demo user ID
+  userToken: null, // Not required for development
+  channelId:
+    import.meta.env.VITE_KNOCK_GUIDE_CHANNEL_ID || "YOUR_GUIDE_CHANNEL_ID", // Replace with your actual guide channel ID
+});
 
 // Guide configuration - always modal type
 const guideConfig = reactive({
-  type: 'modal'
-})
+  type: "modal",
+});
 
 // Guide status tracking
-const guidesCount = ref(0)
-const guidesLoading = ref(false)
-let refreshGuidesCallback = null
+const guidesCount = ref(0);
+const guidesLoading = ref(false);
+let refreshGuidesCallback = null;
 
 // Methods
 const updateUserId = (newUserId) => {
-  console.log('📝 Updating user ID:', newUserId)
-  knockConfig.userId = newUserId
-}
-
-
+  console.log("📝 Updating user ID:", newUserId);
+  knockConfig.userId = newUserId;
+};
 
 const refreshGuides = () => {
-  console.log('🔄 Manual guide refresh requested')
+  console.log("🔄 Manual guide refresh requested");
   if (refreshGuidesCallback) {
-    refreshGuidesCallback()
+    refreshGuidesCallback();
   }
-}
+};
 
 const handleGuidesUpdated = (data) => {
-  guidesCount.value = data.count || 0
-  guidesLoading.value = data.loading || false
-  refreshGuidesCallback = data.refresh || null
-}
+  guidesCount.value = data.count || 0;
+  guidesLoading.value = data.loading || false;
+  refreshGuidesCallback = data.refresh || null;
+};
 </script>
 
 <style scoped>
@@ -155,7 +173,9 @@ const handleGuidesUpdated = (data) => {
   color: #333;
 }
 
-.demo-info, .configuration, .setup-instructions {
+.demo-info,
+.configuration,
+.setup-instructions {
   margin-top: 2rem;
   padding: 1.5rem;
   background: #f8f9fa;
@@ -163,24 +183,28 @@ const handleGuidesUpdated = (data) => {
   border-left: 4px solid #007bff;
 }
 
-.demo-info h3, .configuration h3, .setup-instructions h3 {
+.demo-info h3,
+.configuration h3,
+.setup-instructions h3 {
   margin-top: 0;
   color: #333;
 }
 
-.demo-info ul, .setup-instructions ol {
+.demo-info ul,
+.setup-instructions ol {
   margin: 1rem 0 0 0;
   padding-left: 1.5rem;
 }
 
-.demo-info li, .setup-instructions li {
+.demo-info li,
+.setup-instructions li {
   margin-bottom: 0.5rem;
   line-height: 1.5;
 }
 
 .configuration p {
   margin: 0.5rem 0;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   background: white;
   padding: 0.5rem;
   border-radius: 4px;
@@ -191,7 +215,7 @@ code {
   background: #e9ecef;
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.9em;
 }
 </style>

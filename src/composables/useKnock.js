@@ -7,17 +7,15 @@ console.log("✅ Using packaged KnockGuideClient from @knocklabs/client");
 const knockClient = ref(null);
 const isAuthenticated = ref(false);
 
-// Configuration from environment variables
-const KNOCK_PUBLIC_API_KEY =
-  import.meta.env.VITE_KNOCK_PUBLIC_API_KEY || "YOUR_KNOCK_PUBLIC_API_KEY";
-const KNOCK_GUIDE_CHANNEL_ID =
-  import.meta.env.VITE_KNOCK_GUIDE_CHANNEL_ID || "YOUR_KNOCK_GUIDE_CHANNEL_ID";
-
 /**
  * Initialize and manage the Knock client
  */
 export function useKnock() {
-  const initializeKnock = (apiKey = KNOCK_PUBLIC_API_KEY) => {
+  const initializeKnock = (apiKey) => {
+    if (!apiKey) {
+      throw new Error("API key is required to initialize Knock");
+    }
+
     if (!knockClient.value) {
       knockClient.value = new Knock(apiKey);
     }
@@ -25,8 +23,12 @@ export function useKnock() {
   };
 
   const authenticate = (userId, userToken = null) => {
+    if (!userId) {
+      throw new Error("User ID is required for authentication");
+    }
+
     if (!knockClient.value) {
-      initializeKnock();
+      throw new Error("Knock client must be initialized before authentication");
     }
 
     console.log("🔐 Authenticating with Knock:", {
@@ -63,7 +65,7 @@ const knockGuideClient = ref(null);
 /**
  * Use Knock Guides via the packaged SDK
  */
-export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
+export function useKnockGuides(channelId = null) {
   // Single computed property that automatically updates
   const isGuideClientInitialized = computed(
     () =>
@@ -72,29 +74,41 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
       knockGuideClient.value.selectGuides
   );
 
-  // Initialize the packaged KnockGuideClient
-  if (!knockGuideClient.value && knockClient.value && isAuthenticated.value) {
-    console.log("🏗️ Initializing packaged KnockGuideClient");
-
-    try {
-      knockGuideClient.value = new KnockGuideClient(
-        knockClient.value,
-        channelId
-      );
-      console.log(
-        "✅ Successfully initialized packaged guides client:",
-        knockGuideClient.value
-      );
-
-      // Subscribe to store changes - Vue automatically handles reactivity
-      knockGuideClient.value.store.subscribe(() => {
-        // Vue automatically handles reactivity
-      });
-    } catch (error) {
-      console.error("❌ Failed to initialize packaged guides client:", error);
-      knockGuideClient.value = null;
+  // Initialize the packaged KnockGuideClient when channelId is available
+  const initializeGuideClient = (newChannelId) => {
+    if (!newChannelId) {
+      console.warn("Cannot initialize guide client without channel ID");
+      return;
     }
-  }
+
+    if (!knockClient.value || !isAuthenticated.value) {
+      console.log("Cannot initialize guide client - not authenticated yet");
+      return;
+    }
+
+    if (!knockGuideClient.value) {
+      console.log("🏗️ Initializing packaged KnockGuideClient");
+
+      try {
+        knockGuideClient.value = new KnockGuideClient(
+          knockClient.value,
+          newChannelId
+        );
+        console.log(
+          "✅ Successfully initialized packaged guides client:",
+          knockGuideClient.value
+        );
+
+        // Subscribe to store changes - Vue automatically handles reactivity
+        knockGuideClient.value.store.subscribe(() => {
+          // Vue automatically handles reactivity
+        });
+      } catch (error) {
+        console.error("❌ Failed to initialize packaged guides client:", error);
+        knockGuideClient.value = null;
+      }
+    }
+  };
 
   // Reactive state from the SDK's TanStack store
   const guides = computed(() => {
@@ -133,27 +147,13 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
 
   const fetchGuides = async (filters = {}) => {
     // Check if we can initialize the guide client now (in case authentication happened after useKnockGuides was called)
-    if (!knockGuideClient.value && knockClient.value && isAuthenticated.value) {
-      try {
-        knockGuideClient.value = new KnockGuideClient(
-          knockClient.value,
-          channelId
-        );
-        console.log(
-          "✅ Successfully initialized packaged guides client (late init)"
-        );
-
-        // Subscribe to store changes - Vue automatically handles reactivity
-        knockGuideClient.value.store.subscribe(() => {
-          // Vue automatically handles reactivity
-        });
-      } catch (error) {
-        console.error(
-          "❌ Failed to initialize packaged guides client (late init):",
-          error
-        );
-        knockGuideClient.value = null;
-      }
+    if (
+      !knockGuideClient.value &&
+      knockClient.value &&
+      isAuthenticated.value &&
+      channelId
+    ) {
+      initializeGuideClient(channelId);
     }
 
     // Now check if we have the guide client
@@ -206,5 +206,7 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
     cleanup,
     // Expose the guide client for advanced usage
     guideClient: knockGuideClient,
+    // Expose the initialization function
+    initializeGuideClient,
   };
 }

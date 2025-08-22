@@ -5,9 +5,17 @@ import { useKnockGuides } from "./useKnock.js";
  * Use Knock SDK's built-in guide selector - equivalent to React's useGuide hook
  */
 export function useGuide(options = {}) {
-  let { type, key } = options;
+  let { type, key, channelId } = options;
 
-  const { guideClient, guides } = useKnockGuides();
+  if (!channelId) {
+    console.warn("Channel ID is required for guide functionality");
+    return {
+      step: computed(() => null),
+      guides: computed(() => []),
+    };
+  }
+
+  const { guideClient, guides } = useKnockGuides(channelId);
 
   // Use the SDK's built-in selector
   const step = computed(() => {

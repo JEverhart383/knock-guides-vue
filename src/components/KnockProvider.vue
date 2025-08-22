@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Guide Modal - Always rendered, self-contained -->
-    <GuideModal />
+    <GuideModal :channel-id="channelId" />
 
     <!-- Main content slot -->
     <slot />
@@ -27,6 +27,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  channelId: {
+    type: String,
+    required: true,
+  },
 });
 
 // Emits
@@ -36,8 +40,15 @@ const emit = defineEmits(["guides-updated"]);
 
 // Initialize Knock
 const { initializeKnock, authenticate, teardown } = useKnock();
-const { guides, loading, fetchGuides, startListening, stopListening, cleanup } =
-  useKnockGuides();
+const {
+  guides,
+  loading,
+  fetchGuides,
+  startListening,
+  stopListening,
+  cleanup,
+  initializeGuideClient,
+} = useKnockGuides();
 
 // Emit guide status updates
 // This function is used to communicate guide status to parent components
@@ -88,8 +99,9 @@ onMounted(() => {
   initializeKnock(props.apiKey);
   authenticate(props.userId, props.userToken);
 
-  // Fetch guides and start listening
+  // Initialize the guide client after authentication
   setTimeout(() => {
+    initializeGuideClient(props.channelId);
     fetchGuides();
     startListening();
   }, 500);
