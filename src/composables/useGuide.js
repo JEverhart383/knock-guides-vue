@@ -19,8 +19,12 @@ export function useGuide(options = {}) {
   // Use the SDK's built-in selector or fallback to manual selection
   const step = computed(() => {
     // Try advanced SDK selector first
-    if (guideClient && guideClient.store && guideClient.selectGuides) {
-      const state = guideClient.store.state;
+    if (
+      guideClient.value &&
+      guideClient.value.store &&
+      guideClient.value.selectGuides
+    ) {
+      const state = guideClient.value.store.state;
       const filters = {};
       if (type) filters.type = type;
       if (key) filters.key = key;
@@ -29,7 +33,7 @@ export function useGuide(options = {}) {
         filters,
         state: !!state,
       });
-      const selectedGuides = guideClient.selectGuides(state, filters);
+      const selectedGuides = guideClient.value.selectGuides(state, filters);
       console.log("🔍 selectGuides returned:", selectedGuides);
 
       // selectGuides returns an array, get the first guide
@@ -54,35 +58,6 @@ export function useGuide(options = {}) {
 
       return null;
     }
-
-    // Fallback to manual selection for older SDK versions
-    // COMMENTED OUT: Manual fallback selection logic
-    /*
-    const allGuides = guides.value;
-    if (!allGuides || allGuides.length === 0) return null;
-
-    let selectedGuide = null;
-
-    if (key) {
-      selectedGuide = allGuides.find((guide) => guide.key === key) || null;
-    } else if (type) {
-      const matchingGuides = allGuides.filter((guide) => guide.type === type);
-      if (matchingGuides.length === 0) {
-        selectedGuide = allGuides[0] || null; // Fallback
-      } else {
-        selectedGuide = matchingGuides.sort((a, b) => {
-          if (a.priority && b.priority) return b.priority - a.priority;
-          if (a.created_at && b.created_at)
-            return new Date(b.created_at) - new Date(a.created_at);
-          return 0;
-        })[0];
-      }
-    } else {
-      selectedGuide = allGuides[0] || null;
-    }
-
-    return selectedGuide;
-    */
 
     // If SDK is not available, return null
     console.warn("SDK guide client not available, returning null");

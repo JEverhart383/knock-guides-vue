@@ -66,171 +66,143 @@ export function useKnock() {
 }
 
 // Global guide client instance (shared across all components)
-let globalGuideClient = null;
-
-// COMMENTED OUT: Global fallback state (shared across all components)
-// const globalFallbackGuides = ref([]);
-// const globalFallbackLoading = ref(false);
-// const globalFallbackError = ref(null);
+const knockGuideClient = ref(null);
 
 /**
  * Use Knock Guides via the packaged SDK
  */
 export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
   console.log("🔍 useKnockGuides called with:", {
-    globalGuideClient: !!globalGuideClient,
+    knockGuideClient: !!knockGuideClient.value,
     knockClientValue: !!knockClient.value,
     isAuthenticated: isAuthenticated.value,
     channelId,
   });
 
-  // COMMENTED OUT: Use global fallback state
-  // const fallbackGuides = globalFallbackGuides;
-  // const fallbackLoading = globalFallbackLoading;
-  // const fallbackError = globalFallbackError;
-
-  // Create a reactive trigger for the TanStack store
-  const storeUpdateTrigger = ref(0);
+  // Single computed property that automatically updates
+  const isGuideClientInitialized = computed(
+    () =>
+      knockGuideClient.value &&
+      knockGuideClient.value.store &&
+      knockGuideClient.value.selectGuides
+  );
 
   // Initialize the packaged KnockGuideClient
-  if (!globalGuideClient && knockClient.value && isAuthenticated.value) {
+  if (!knockGuideClient.value && knockClient.value && isAuthenticated.value) {
     console.log("🏗️ Initializing packaged KnockGuideClient");
 
     try {
-      globalGuideClient = new KnockGuideClient(knockClient.value, channelId);
+      knockGuideClient.value = new KnockGuideClient(
+        knockClient.value,
+        channelId
+      );
       console.log(
         "✅ Successfully initialized packaged guides client:",
-        globalGuideClient
+        knockGuideClient.value
       );
 
-      // Subscribe to store changes to trigger Vue reactivity
-      globalGuideClient.store.subscribe(() => {
-        console.log("🔄 TanStack store updated, triggering Vue reactivity");
-        storeUpdateTrigger.value++;
+      // Subscribe to store changes - Vue automatically handles reactivity
+      knockGuideClient.value.store.subscribe(() => {
+        console.log(
+          "🔄 TanStack store updated, Vue reactivity handled automatically"
+        );
       });
     } catch (error) {
       console.error("❌ Failed to initialize packaged guides client:", error);
       console.log("📡 Falling back to API method");
-      globalGuideClient = null;
+      knockGuideClient.value = null;
     }
   } else {
     console.log("🔍 Skipping initialization because:", {
-      globalGuideClientExists: !!globalGuideClient,
+      knockGuideClientExists: !!knockGuideClient.value,
       knockClientExists: !!knockClient.value,
       isAuthenticated: isAuthenticated.value,
     });
   }
 
-  // Check if we have the advanced guide client, otherwise fall back to basic implementation
-  const hasAdvancedGuideClient =
-    globalGuideClient &&
-    globalGuideClient.store &&
-    globalGuideClient.selectGuides;
-
   // Debug logging
   console.log("🔍 Debug info:", {
-    globalGuideClient: !!globalGuideClient,
-    hasStore: !!(globalGuideClient && globalGuideClient.store),
-    hasSelectGuides: !!(globalGuideClient && globalGuideClient.selectGuides),
-    hasAdvancedGuideClient,
+    knockGuideClient: !!knockGuideClient.value,
+    hasStore: !!(knockGuideClient.value && knockGuideClient.value.store),
+    hasSelectGuides: !!(
+      knockGuideClient.value && knockGuideClient.value.selectGuides
+    ),
+    isGuideClientInitialized: isGuideClientInitialized.value,
     knockClientValue: !!knockClient.value,
     isAuthenticated: isAuthenticated.value,
   });
 
-  // Reactive state from the SDK's TanStack store or fallback
+  // Reactive state from the SDK's TanStack store
   const guides = computed(() => {
-    // Access the trigger to make this computed reactive to store changes
-    storeUpdateTrigger.value;
-
-    // Re-check if we have the advanced guide client (it might have been initialized after the initial check)
-    const currentHasAdvancedGuideClient =
-      globalGuideClient &&
-      globalGuideClient.store &&
-      globalGuideClient.selectGuides;
-
-    if (currentHasAdvancedGuideClient) {
-      const state = globalGuideClient.store.state;
-      const selectedGuides = globalGuideClient.selectGuides(state);
+    if (isGuideClientInitialized.value) {
+      const state = knockGuideClient.value.store.state;
+      const selectedGuides = knockGuideClient.value.selectGuides(state);
       return selectedGuides;
     }
 
-    // COMMENTED OUT: Fallback to manual guides
-    // console.log("🔍 useKnockGuides guides (fallback):", fallbackGuides.value);
-    // return fallbackGuides.value;
-
-    // Return empty array if SDK not available
     console.warn("SDK not available, returning empty guides array");
     return [];
   });
 
   const loading = computed(() => {
-    if (hasAdvancedGuideClient) {
-      const state = globalGuideClient.store.state;
+    if (isGuideClientInitialized.value) {
+      const state = knockGuideClient.value.store.state;
       return Object.values(state.queries).some(
         (query) => query.status === "loading"
       );
     }
 
-    // COMMENTED OUT: Fallback loading state
-    // return fallbackLoading.value;
-
-    // Return false if SDK not available
     return false;
   });
 
   const error = computed(() => {
-    if (hasAdvancedGuideClient) {
-      const state = globalGuideClient.store.state;
+    if (isGuideClientInitialized.value) {
+      const state = knockGuideClient.value.store.state;
       const errorQuery = Object.values(state.queries).find(
         (query) => query.status === "error"
       );
       return errorQuery?.error?.message || null;
     }
 
-    // COMMENTED OUT: Fallback error state
-    // return fallbackError.value;
-
-    // Return null if SDK not available
     return null;
   });
 
   const fetchGuides = async (filters = {}) => {
     // Check if we can initialize the guide client now (in case authentication happened after useKnockGuides was called)
-    if (!globalGuideClient && knockClient.value && isAuthenticated.value) {
+    if (!knockGuideClient.value && knockClient.value && isAuthenticated.value) {
       console.log(
         "🏗️ Late initialization of KnockGuideClient during fetchGuides"
       );
 
       try {
-        globalGuideClient = new KnockGuideClient(knockClient.value, channelId);
+        knockGuideClient.value = new KnockGuideClient(
+          knockClient.value,
+          channelId
+        );
         console.log(
           "✅ Successfully initialized packaged guides client (late init)"
         );
 
-        // Subscribe to store changes to trigger Vue reactivity
-        globalGuideClient.store.subscribe(() => {
-          console.log("🔄 TanStack store updated, triggering Vue reactivity");
-          storeUpdateTrigger.value++;
+        // Subscribe to store changes - Vue automatically handles reactivity
+        knockGuideClient.value.store.subscribe(() => {
+          console.log(
+            "🔄 TanStack store updated, Vue reactivity handled automatically"
+          );
         });
       } catch (error) {
         console.error(
           "❌ Failed to initialize packaged guides client (late init):",
           error
         );
-        globalGuideClient = null;
+        knockGuideClient.value = null;
       }
     }
 
-    // Now check if we have the advanced guide client
-    const currentHasAdvancedGuideClient =
-      globalGuideClient &&
-      globalGuideClient.store &&
-      globalGuideClient.selectGuides;
-
-    if (currentHasAdvancedGuideClient) {
+    // Now check if we have the guide client
+    if (isGuideClientInitialized.value) {
       console.log("📡 Fetching guides using packaged KnockGuideClient");
       try {
-        await globalGuideClient.fetch({ filters });
+        await knockGuideClient.value.fetch({ filters });
         console.log("✅ Guides fetched successfully using packaged client");
       } catch (err) {
         console.error("❌ Error fetching guides with packaged client:", err);
@@ -243,47 +215,28 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
   };
 
   const startListening = () => {
-    // Re-check if we have the advanced guide client (it might have been initialized after the initial check)
-    const currentHasAdvancedGuideClient =
-      globalGuideClient &&
-      globalGuideClient.store &&
-      globalGuideClient.selectGuides;
-
-    if (currentHasAdvancedGuideClient) {
+    if (isGuideClientInitialized.value) {
       console.log("🚀 Starting real-time guide updates via packaged client");
-      globalGuideClient.subscribe();
+      knockGuideClient.value.subscribe();
     } else {
-      console.log(
-        "🚀 Real-time updates not available - no advanced guide client"
-      );
+      console.log("🚀 Real-time updates not available - no guide client");
     }
   };
 
   const stopListening = () => {
-    // Re-check if we have the advanced guide client
-    const currentHasAdvancedGuideClient =
-      globalGuideClient &&
-      globalGuideClient.store &&
-      globalGuideClient.selectGuides;
-
-    if (currentHasAdvancedGuideClient) {
+    if (isGuideClientInitialized.value) {
       console.log("🛑 Stopping real-time guide updates");
-      globalGuideClient.unsubscribe();
+      knockGuideClient.value.unsubscribe();
     } else {
       console.log("🛑 No real-time connection to stop");
     }
   };
 
   const cleanup = () => {
-    if (globalGuideClient && globalGuideClient.cleanup) {
-      globalGuideClient.cleanup();
+    if (knockGuideClient.value && knockGuideClient.value.cleanup) {
+      knockGuideClient.value.cleanup();
     }
-    globalGuideClient = null;
-
-    // COMMENTED OUT: Fallback state reset
-    // fallbackGuides.value = [];
-    // fallbackLoading.value = false;
-    // fallbackError.value = null;
+    knockGuideClient.value = null;
   };
 
   return {
@@ -295,6 +248,6 @@ export function useKnockGuides(channelId = KNOCK_GUIDE_CHANNEL_ID) {
     stopListening,
     cleanup,
     // Expose the guide client for advanced usage
-    guideClient: globalGuideClient,
+    guideClient: knockGuideClient,
   };
 }
