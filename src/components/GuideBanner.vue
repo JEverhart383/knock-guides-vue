@@ -61,15 +61,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch, ref } from "vue";
+import { computed, onMounted, watch, ref, inject } from "vue";
 import { useGuide } from "../composables/useGuide.js";
+
+// Inject channelId from KnockProvider
+const channelId = inject("knockChannelId");
 
 // Props
 const props = defineProps({
-  channelId: {
-    type: String,
-    required: true,
-  },
   guideKey: {
     type: String,
     default: null,
@@ -88,7 +87,7 @@ const emit = defineEmits(["button-click", "dismiss"]);
 const { step, guides } = useGuide({
   type: "banner",
   key: props.guideKey,
-  channelId: props.channelId,
+  channelId: channelId,
 });
 
 // Track mount state

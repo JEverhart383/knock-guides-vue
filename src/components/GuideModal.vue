@@ -51,21 +51,16 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, watch, ref } from "vue";
+import { computed, onMounted, onUnmounted, watch, ref, inject } from "vue";
 import { useGuide } from "../composables/useGuide.js";
 
-// Props
-const props = defineProps({
-  channelId: {
-    type: String,
-    required: true,
-  },
-});
+// Inject channelId from KnockProvider
+const channelId = inject("knockChannelId");
 
 // Use the guide composable to get guide data and determine visibility
 const { step, guides } = useGuide({
   type: "modal",
-  channelId: props.channelId,
+  channelId: channelId,
 });
 
 // Track mount state for Teleport

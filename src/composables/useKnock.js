@@ -160,6 +160,7 @@ export function useKnockGuides(channelId = null) {
     if (isGuideClientInitialized.value) {
       try {
         await knockGuideClient.value.fetch({ filters });
+        knockGuideClient.value.subscribe();
         console.log("✅ Guides fetched successfully using packaged client");
       } catch (err) {
         console.error("❌ Error fetching guides with packaged client:", err);

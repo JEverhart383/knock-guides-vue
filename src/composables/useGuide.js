@@ -8,7 +8,9 @@ export function useGuide(options = {}) {
   let { type, key, channelId } = options;
 
   if (!channelId) {
-    console.warn("Channel ID is required for guide functionality");
+    console.warn(
+      "Channel ID is required for guide functionality. Make sure you're using this composable within a KnockProvider component."
+    );
     return {
       step: computed(() => null),
       guides: computed(() => []),

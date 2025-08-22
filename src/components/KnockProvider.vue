@@ -1,10 +1,10 @@
 <template>
   <div>
     <!-- Guide Banner - Always rendered, self-contained -->
-    <GuideBanner :channel-id="channelId" />
+    <GuideBanner />
 
     <!-- Guide Modal - Always rendered, self-contained -->
-    <GuideModal :channel-id="channelId" />
+    <GuideModal />
 
     <!-- Main content slot -->
     <slot />
@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, watch } from "vue";
+import { onMounted, onUnmounted, watch, provide } from "vue";
 import { useKnock, useKnockGuides } from "../composables/useKnock.js";
 import GuideModal from "./GuideModal.vue";
 import GuideBanner from "./GuideBanner.vue";
@@ -36,6 +36,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+// Provide channelId to child components
+provide("knockChannelId", props.channelId);
 
 // Emits
 // NOTE: This event system is used for communicating guide status to parent components
